@@ -1,0 +1,1015 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Quiz Interactivo</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap');
+
+:root {
+  --bg: #0d0f14; --bg2: #141720; --bg3: #1c2030;
+  --border: rgba(255,255,255,0.08); --border2: rgba(255,255,255,0.15);
+  --text: #f0f2f7; --text2: #8b91a8; --text3: #545c75;
+  --accent: #4ade9e; --accent2: #38c77e; --accent-bg: rgba(74,222,158,0.1);
+  --blue: #60a5fa; --blue-bg: rgba(96,165,250,0.1);
+  --amber: #fbbf24; --amber-bg: rgba(251,191,36,0.1);
+  --coral: #fb7185; --coral-bg: rgba(251,113,133,0.1);
+  --purple: #a78bfa; --purple-bg: rgba(167,139,250,0.1);
+  --red: #f87171;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+
+/* ── SETUP SCREEN ── */
+#setup-screen {
+  min-height: 100vh; display: flex; flex-direction: column;
+  align-items: center; justify-content: center; padding: 2rem;
+}
+.setup-card {
+  background: var(--bg2); border: 1px solid var(--border);
+  border-radius: 20px; padding: 2.5rem; max-width: 520px; width: 100%;
+}
+.setup-logo { font-size: 12px; font-family: 'DM Mono',monospace; color: var(--accent); letter-spacing: 0.15em; margin-bottom: 1.5rem; }
+.setup-title { font-size: 26px; font-weight: 400; margin-bottom: 0.5rem; }
+.setup-sub { font-size: 14px; color: var(--text2); margin-bottom: 2rem; line-height: 1.6; }
+.setup-label { font-size: 11px; font-family: 'DM Mono',monospace; color: var(--text3); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 6px; }
+.setup-input {
+  width: 100%; padding: 10px 14px; border-radius: 10px;
+  border: 1px solid var(--border); background: var(--bg3);
+  color: var(--text); font-size: 14px; font-family: 'DM Sans',sans-serif;
+  outline: none; margin-bottom: 1rem; transition: border-color 0.15s;
+}
+.setup-input:focus { border-color: var(--accent); }
+.setup-btn {
+  width: 100%; padding: 12px; border-radius: 10px;
+  border: 1px solid rgba(74,222,158,0.4); background: var(--accent-bg);
+  color: var(--accent); font-size: 15px; cursor: pointer;
+  font-family: 'DM Sans',sans-serif; margin-bottom: 8px; transition: all 0.15s;
+}
+.setup-btn:hover { background: rgba(74,222,158,0.2); }
+.setup-note {
+  font-size: 12px; color: var(--text3); margin-top: 1.5rem;
+  padding: 12px; border: 1px solid var(--border); border-radius: 8px;
+  line-height: 1.7; background: var(--bg3);
+}
+.setup-note a { color: var(--accent); text-decoration: none; }
+.setup-note code { font-family: 'DM Mono',monospace; font-size: 11px; background: var(--bg); padding: 1px 5px; border-radius: 4px; }
+.setup-error { font-size: 13px; color: var(--coral); margin-top: 0.5rem; display: none; }
+
+/* ── MODE SELECTOR ── */
+#mode-selector { min-height:100vh; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:2rem; }
+.mode-logo { font-size:12px; font-family:'DM Mono',monospace; color:var(--accent); letter-spacing:0.15em; text-transform:uppercase; margin-bottom:2.5rem; opacity:0.8; }
+.mode-title { font-size:clamp(1.8rem,5vw,3rem); font-weight:300; text-align:center; margin-bottom:0.5rem; }
+.mode-sub { font-size:14px; color:var(--text2); margin-bottom:3rem; text-align:center; }
+.mode-cards { display:flex; gap:1.25rem; flex-wrap:wrap; justify-content:center; max-width:720px; }
+.mode-card {
+  flex:1; min-width:200px; max-width:220px; background:var(--bg2);
+  border:1px solid var(--border); border-radius:16px; padding:1.75rem;
+  cursor:pointer; transition:all 0.2s; text-align:center;
+}
+.mode-card:hover { transform:translateY(-3px); background:var(--bg3); }
+.mode-card.presenter:hover { border-color:var(--accent); box-shadow:0 0 30px rgba(74,222,158,0.1); }
+.mode-card.student:hover { border-color:var(--blue); box-shadow:0 0 30px rgba(96,165,250,0.1); }
+.mode-card.editor:hover { border-color:var(--purple); box-shadow:0 0 30px rgba(167,139,250,0.1); }
+.mc-icon { font-size:2rem; margin-bottom:1rem; }
+.mc-title { font-size:16px; font-weight:500; margin-bottom:0.4rem; }
+.mc-desc { font-size:12px; color:var(--text2); line-height:1.6; }
+
+/* ── SHARED ── */
+.app-view { display:none; min-height:100vh; flex-direction:column; }
+.app-view.active { display:flex; }
+.topbar {
+  display:flex; align-items:center; justify-content:space-between;
+  padding:0.875rem 1.5rem; border-bottom:1px solid var(--border);
+  background:var(--bg); position:sticky; top:0; z-index:20; gap:1rem;
+}
+.topbar-title { font-size:13px; font-family:'DM Mono',monospace; color:var(--text2); letter-spacing:0.05em; }
+.topbar-title span { color:var(--accent); }
+.btn-back {
+  font-size:12px; color:var(--text2); background:none;
+  border:1px solid var(--border); padding:5px 12px;
+  border-radius:7px; cursor:pointer; font-family:'DM Sans',sans-serif; transition:all 0.15s;
+}
+.btn-back:hover { color:var(--text); border-color:var(--border2); background:var(--bg2); }
+.live-badge { display:flex; align-items:center; gap:6px; }
+.live-dot { width:7px; height:7px; border-radius:50%; background:var(--accent); animation:pulse 2s infinite; }
+.live-txt { font-size:12px; color:var(--accent); font-family:'DM Mono',monospace; }
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
+
+/* ── PRESENTER ── */
+.presenter-body {
+  flex:1; display:flex; flex-direction:column; padding:1.5rem;
+  max-width:960px; width:100%; margin:0 auto; gap:1.25rem;
+}
+.presenter-stats { display:grid; grid-template-columns:repeat(4,1fr); gap:10px; }
+.pstat { background:var(--bg2); border:1px solid var(--border); border-radius:12px; padding:1rem; text-align:center; }
+.pstat-num { font-size:26px; font-weight:500; font-family:'DM Mono',monospace; }
+.pstat-num.green { color:var(--accent); }
+.pstat-num.amber { color:var(--amber); }
+.pstat-lbl { font-size:10px; color:var(--text3); text-transform:uppercase; letter-spacing:0.08em; margin-top:4px; }
+
+/* Countdown ring */
+.countdown-ring { position:relative; width:64px; height:64px; flex-shrink:0; }
+.countdown-ring svg { transform:rotate(-90deg); }
+.countdown-ring .ring-bg { fill:none; stroke:var(--bg3); stroke-width:4; }
+.countdown-ring .ring-fill { fill:none; stroke-width:4; stroke-linecap:round; transition:stroke-dashoffset 1s linear, stroke 0.3s; }
+.countdown-num {
+  position:absolute; top:50%; left:50%; transform:translate(-50%,-50%);
+  font-size:20px; font-weight:500; font-family:'DM Mono',monospace;
+}
+
+.qr-panel {
+  background:var(--bg2); border:1px solid var(--border); border-radius:14px;
+  padding:1.25rem; display:flex; gap:1.25rem; align-items:center; flex-wrap:wrap;
+}
+.qr-box { background:white; padding:10px; border-radius:10px; flex-shrink:0; }
+.qr-info { flex:1; min-width:180px; }
+.qr-title { font-size:15px; font-weight:500; margin-bottom:5px; }
+.qr-url { font-size:11px; font-family:'DM Mono',monospace; color:var(--accent); word-break:break-all; background:var(--accent-bg); padding:7px 10px; border-radius:7px; margin-bottom:8px; }
+.qr-note { font-size:12px; color:var(--text2); line-height:1.6; }
+
+.p-q-box {
+  background:var(--bg2); border:1px solid var(--border); border-radius:16px; padding:1.75rem;
+}
+.q-label { font-size:11px; font-family:'DM Mono',monospace; color:var(--accent); letter-spacing:0.1em; text-transform:uppercase; margin-bottom:0.75rem; }
+.q-text { font-size:clamp(16px,2.5vw,22px); font-weight:400; color:var(--text); line-height:1.5; margin-bottom:1.5rem; }
+
+.bar-row { margin-bottom:14px; }
+.bar-meta { display:flex; justify-content:space-between; align-items:center; margin-bottom:5px; }
+.bar-option { font-size:14px; color:var(--text); display:flex; align-items:center; gap:8px; flex:1; min-width:0; }
+.bar-letter {
+  width:22px; height:22px; border-radius:50%; background:var(--bg3);
+  border:1px solid var(--border2); display:inline-flex; align-items:center;
+  justify-content:center; font-size:11px; font-family:'DM Mono',monospace; flex-shrink:0;
+}
+.bar-count { font-size:12px; font-family:'DM Mono',monospace; color:var(--text3); margin-left:8px; flex-shrink:0; }
+.bar-track { height:34px; background:var(--bg3); border-radius:8px; overflow:hidden; }
+.bar-fill {
+  height:100%; border-radius:8px; transition:width 0.5s cubic-bezier(0.4,0,0.2,1);
+  display:flex; align-items:center; padding:0 10px; min-width:0;
+}
+.bar-pct { font-size:12px; font-family:'DM Mono',monospace; font-weight:500; color:rgba(0,0,0,0.75); white-space:nowrap; }
+.correct-tag { font-size:10px; background:var(--accent-bg); color:var(--accent); padding:2px 8px; border-radius:20px; border:1px solid rgba(74,222,158,0.3); font-family:'DM Mono',monospace; margin-left:6px; flex-shrink:0; }
+
+/* Explanation box */
+.explanation-box {
+  margin-top:1.25rem; padding:1rem 1.25rem;
+  background:var(--accent-bg); border:1px solid rgba(74,222,158,0.25);
+  border-radius:12px; display:none;
+}
+.explanation-box.visible { display:block; }
+.explanation-label { font-size:11px; font-family:'DM Mono',monospace; color:var(--accent); letter-spacing:0.08em; text-transform:uppercase; margin-bottom:6px; }
+.explanation-text { font-size:14px; color:var(--text); line-height:1.7; }
+
+.presenter-actions { display:flex; gap:8px; flex-wrap:wrap; }
+.pbt {
+  padding:9px 18px; border-radius:9px; border:1px solid var(--border);
+  background:var(--bg2); color:var(--text2); font-size:14px;
+  cursor:pointer; font-family:'DM Sans',sans-serif; transition:all 0.15s;
+}
+.pbt:hover { background:var(--bg3); color:var(--text); }
+.pbt-accent { border-color:rgba(74,222,158,0.4); background:var(--accent-bg); color:var(--accent); }
+.pbt-accent:hover { background:rgba(74,222,158,0.2); }
+.pbt-amber { border-color:rgba(251,191,36,0.4); background:var(--amber-bg); color:var(--amber); }
+.pbt-amber:hover { background:rgba(251,191,36,0.2); }
+.pbt-red { border-color:rgba(248,113,113,0.4); background:var(--coral-bg); color:var(--coral); }
+
+/* ── STUDENT ── */
+.student-body {
+  flex:1; display:flex; flex-direction:column; align-items:center;
+  padding:2rem 1.25rem; max-width:520px; width:100%; margin:0 auto;
+}
+.s-progress { display:flex; gap:6px; margin-bottom:2rem; align-self:stretch; }
+.s-prog-dot { height:3px; border-radius:2px; flex:1; background:var(--bg3); transition:background 0.3s; }
+.s-prog-dot.done { background:var(--accent); }
+.s-prog-dot.active { background:var(--blue); }
+
+/* Student countdown */
+.s-countdown {
+  display:flex; align-items:center; justify-content:center;
+  gap:10px; margin-bottom:1.5rem; align-self:stretch;
+  padding:10px 16px; border-radius:10px; border:1px solid var(--border);
+  background:var(--bg2);
+}
+.s-countdown-num { font-size:22px; font-weight:500; font-family:'DM Mono',monospace; min-width:32px; }
+.s-countdown-bar { flex:1; height:6px; background:var(--bg3); border-radius:3px; overflow:hidden; }
+.s-countdown-fill { height:100%; border-radius:3px; transition:width 1s linear, background 0.5s; }
+.s-countdown-lbl { font-size:12px; color:var(--text3); }
+
+.s-q-text { font-size:clamp(17px,4vw,21px); font-weight:400; color:var(--text); line-height:1.55; margin-bottom:1.75rem; align-self:stretch; }
+.s-options { display:flex; flex-direction:column; gap:10px; align-self:stretch; }
+.s-opt {
+  padding:14px 18px; border-radius:12px; border:1px solid var(--border);
+  background:var(--bg2); color:var(--text); font-size:15px;
+  cursor:pointer; transition:all 0.15s; text-align:left;
+  display:flex; align-items:center; gap:12px; font-family:'DM Sans',sans-serif;
+}
+.s-opt:hover { border-color:var(--border2); background:var(--bg3); transform:translateX(3px); }
+.s-opt.voted { border-color:var(--accent); background:var(--accent-bg); color:var(--accent); cursor:default; transform:none; }
+.s-opt.disabled { opacity:0.5; cursor:not-allowed; transform:none; }
+.s-opt-letter {
+  width:28px; height:28px; border-radius:8px; background:var(--bg3);
+  border:1px solid var(--border2); display:flex; align-items:center;
+  justify-content:center; font-size:12px; font-family:'DM Mono',monospace; flex-shrink:0; transition:all 0.15s;
+}
+.s-opt.voted .s-opt-letter { background:var(--accent); color:#0d0f14; border-color:var(--accent); }
+.s-success {
+  display:flex; flex-direction:column; align-items:center;
+  text-align:center; padding:3rem 1rem; gap:1rem; align-self:stretch;
+}
+.s-success-icon {
+  width:72px; height:72px; border-radius:50%; background:var(--accent-bg);
+  border:1px solid rgba(74,222,158,0.4); display:flex; align-items:center; justify-content:center; font-size:32px;
+}
+.s-success-title { font-size:20px; font-weight:500; }
+.s-success-sub { font-size:14px; color:var(--text2); max-width:280px; line-height:1.6; }
+.s-time-up {
+  display:flex; flex-direction:column; align-items:center;
+  text-align:center; padding:2rem 1rem; gap:1rem; align-self:stretch;
+  border:1px solid rgba(248,113,113,0.3); border-radius:14px; background:var(--coral-bg);
+}
+.s-time-up-icon { font-size:2.5rem; }
+.s-time-up-title { font-size:18px; font-weight:500; color:var(--coral); }
+.s-time-up-sub { font-size:13px; color:var(--text2); }
+
+/* ── EDITOR ── */
+.editor-body { flex:1; display:flex; gap:1.25rem; padding:1.5rem; max-width:1000px; width:100%; margin:0 auto; flex-wrap:wrap; }
+.e-sidebar { width:240px; flex-shrink:0; display:flex; flex-direction:column; gap:8px; }
+.e-q-item {
+  padding:11px 14px; border-radius:10px; border:1px solid var(--border);
+  background:var(--bg2); cursor:pointer; transition:all 0.15s;
+  font-size:13px; color:var(--text2); line-height:1.5;
+}
+.e-q-item:hover { border-color:var(--border2); color:var(--text); }
+.e-q-item.active { border-color:rgba(167,139,250,0.5); background:var(--purple-bg); color:var(--purple); }
+.e-q-num { font-family:'DM Mono',monospace; font-size:10px; margin-bottom:4px; opacity:0.7; }
+.e-add-btn {
+  padding:10px; border-radius:10px; border:1px dashed var(--border2);
+  background:none; color:var(--text3); font-size:13px; cursor:pointer;
+  font-family:'DM Sans',sans-serif; transition:all 0.15s;
+}
+.e-add-btn:hover { color:var(--text2); border-color:var(--purple); }
+.e-form { flex:1; min-width:300px; display:flex; flex-direction:column; gap:1rem; }
+.e-label { font-size:11px; font-family:'DM Mono',monospace; color:var(--text3); text-transform:uppercase; letter-spacing:0.08em; margin-bottom:6px; }
+.e-input {
+  width:100%; padding:10px 14px; border-radius:10px; border:1px solid var(--border);
+  background:var(--bg2); color:var(--text); font-size:14px;
+  font-family:'DM Sans',sans-serif; outline:none; transition:border-color 0.15s; resize:vertical;
+}
+.e-input:focus { border-color:var(--purple); }
+.e-option-row { display:flex; align-items:center; gap:8px; margin-bottom:8px; }
+.e-correct-radio { accent-color:var(--accent); width:16px; height:16px; cursor:pointer; }
+.e-opt-input {
+  flex:1; padding:8px 12px; border-radius:8px; border:1px solid var(--border);
+  background:var(--bg2); color:var(--text); font-size:13px;
+  font-family:'DM Sans',sans-serif; outline:none;
+}
+.e-opt-input:focus { border-color:var(--border2); }
+.e-del-opt { background:none; border:none; color:var(--text3); cursor:pointer; font-size:16px; padding:4px; border-radius:6px; transition:color 0.15s; }
+.e-del-opt:hover { color:var(--coral); }
+.e-actions { display:flex; gap:8px; flex-wrap:wrap; margin-top:0.5rem; }
+.ebtn { padding:9px 18px; border-radius:9px; border:1px solid var(--border); background:var(--bg2); color:var(--text2); font-size:13px; cursor:pointer; transition:all 0.15s; font-family:'DM Sans',sans-serif; }
+.ebtn:hover { color:var(--text); background:var(--bg3); }
+.ebtn-save { border-color:rgba(74,222,158,0.4); background:var(--accent-bg); color:var(--accent); }
+.ebtn-save:hover { background:rgba(74,222,158,0.2); }
+.ebtn-del { border-color:rgba(251,113,133,0.3); background:var(--coral-bg); color:var(--coral); }
+.correct-hint { font-size:10px; color:var(--text3); flex-shrink:0; }
+
+/* Timer display in topbar */
+.timer-topbar { display:flex; align-items:center; gap:8px; }
+.timer-compact { font-size:13px; font-family:'DM Mono',monospace; color:var(--amber); }
+
+/* Connection status */
+.conn-badge {
+  display:inline-flex; align-items:center; gap:5px;
+  font-size:11px; font-family:'DM Mono',monospace;
+  padding:3px 10px; border-radius:20px; border:1px solid var(--border);
+  color:var(--text3);
+}
+.conn-badge.ok { border-color:rgba(74,222,158,0.4); color:var(--accent); background:var(--accent-bg); }
+.conn-badge.err { border-color:rgba(251,113,133,0.4); color:var(--coral); background:var(--coral-bg); }
+.conn-dot { width:6px; height:6px; border-radius:50%; background:currentColor; }
+
+@media(max-width:600px){
+  .presenter-stats{grid-template-columns:repeat(2,1fr);}
+  .e-sidebar{width:100%;}
+  .qr-panel{flex-direction:column;}
+  .mode-cards{flex-direction:column;align-items:center;}
+  .mode-card{max-width:100%;width:100%;}
+}
+</style>
+</head>
+<body>
+
+<!-- ══════════════════════════════════════════
+     SETUP SCREEN (Supabase credentials)
+══════════════════════════════════════════ -->
+<div id="setup-screen">
+  <div class="setup-card">
+    <div class="setup-logo">Quiz Interactivo — configuración</div>
+    <h1 class="setup-title">Conectar base de datos</h1>
+    <p class="setup-sub">
+      Para votación en tiempo real con múltiples dispositivos necesitás una cuenta gratuita en
+      <a href="https://supabase.com" target="_blank" style="color:var(--accent)">Supabase</a>.
+      Completá los datos una sola vez — se guardan en este navegador.
+    </p>
+    <div class="setup-label">Supabase Project URL</div>
+    <input class="setup-input" id="sb-url" placeholder="https://xxxxxxxxxxxx.supabase.co" />
+    <div class="setup-label">Supabase Anon Key</div>
+    <input class="setup-input" id="sb-key" placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6..." />
+    <button class="setup-btn" onclick="connectSupabase()">Conectar y continuar →</button>
+    <div id="setup-error" class="setup-error"></div>
+    <div class="setup-note">
+      <strong style="color:var(--text2)">Cómo obtener los datos:</strong><br>
+      1. Creá cuenta en <a href="https://supabase.com" target="_blank">supabase.com</a> (gratis)<br>
+      2. Nuevo proyecto → Settings → API<br>
+      3. Copiá <code>Project URL</code> y <code>anon public key</code><br>
+      4. En el SQL Editor ejecutá:<br>
+      <code style="display:block;margin-top:6px;padding:8px;background:var(--bg);border-radius:6px;line-height:1.8;font-size:10px;">
+CREATE TABLE IF NOT EXISTS quiz_votes (<br>
+&nbsp;&nbsp;id BIGSERIAL PRIMARY KEY,<br>
+&nbsp;&nbsp;session_id TEXT NOT NULL,<br>
+&nbsp;&nbsp;q_index INTEGER NOT NULL,<br>
+&nbsp;&nbsp;option_index INTEGER NOT NULL,<br>
+&nbsp;&nbsp;created_at TIMESTAMPTZ DEFAULT NOW()<br>
+);<br>
+CREATE TABLE IF NOT EXISTS quiz_state (<br>
+&nbsp;&nbsp;session_id TEXT PRIMARY KEY,<br>
+&nbsp;&nbsp;current_q INTEGER DEFAULT 0,<br>
+&nbsp;&nbsp;timer_end BIGINT DEFAULT 0,<br>
+&nbsp;&nbsp;revealed BOOLEAN DEFAULT FALSE,<br>
+&nbsp;&nbsp;active BOOLEAN DEFAULT TRUE,<br>
+&nbsp;&nbsp;updated_at TIMESTAMPTZ DEFAULT NOW()<br>
+);<br>
+ALTER TABLE quiz_votes ENABLE ROW LEVEL SECURITY;<br>
+ALTER TABLE quiz_state ENABLE ROW LEVEL SECURITY;<br>
+CREATE POLICY "allow_all_votes" ON quiz_votes FOR ALL USING (true) WITH CHECK (true);<br>
+CREATE POLICY "allow_all_state" ON quiz_state FOR ALL USING (true) WITH CHECK (true);
+      </code>
+      5. Activá Realtime para <code>quiz_state</code> y <code>quiz_votes</code> en Database → Replication
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     MODE SELECTOR
+══════════════════════════════════════════ -->
+<div id="mode-selector" style="display:none;">
+  <div class="mode-logo">Quiz Interactivo</div>
+  <h1 class="mode-title">¿Cómo ingresás?</h1>
+  <p class="mode-sub">Seleccioná tu rol para continuar</p>
+  <div class="mode-cards">
+    <div class="mode-card presenter" onclick="enterMode('presenter')">
+      <div class="mc-icon">🖥️</div>
+      <div class="mc-title">Presentador</div>
+      <div class="mc-desc">Proyectá y controlá el quiz en tiempo real.</div>
+    </div>
+    <div class="mode-card student" onclick="enterMode('student')">
+      <div class="mc-icon">📱</div>
+      <div class="mc-title">Alumno</div>
+      <div class="mc-desc">Respondé de forma anónima desde tu dispositivo.</div>
+    </div>
+    <div class="mode-card editor" onclick="enterMode('editor')">
+      <div class="mc-icon">✏️</div>
+      <div class="mc-title">Editor</div>
+      <div class="mc-desc">Editá preguntas, opciones y explicaciones.</div>
+    </div>
+  </div>
+  <div style="margin-top:2rem;display:flex;gap:10px;align-items:center;">
+    <span id="conn-status" class="conn-badge">conectando...</span>
+    <button onclick="showSetup()" style="font-size:12px;color:var(--text3);background:none;border:none;cursor:pointer;font-family:'DM Sans',sans-serif;">cambiar credenciales</button>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     PRESENTER VIEW
+══════════════════════════════════════════ -->
+<div id="presenter-view" class="app-view">
+  <div class="topbar">
+    <div class="topbar-title">modo <span>presentador</span></div>
+    <div style="display:flex;gap:10px;align-items:center;">
+      <div class="timer-topbar"><span class="timer-compact" id="p-timer-compact">—</span></div>
+      <div class="live-badge">
+        <div class="live-dot"></div>
+        <span class="live-txt">en vivo</span>
+      </div>
+      <button class="btn-back" onclick="goHome()">← inicio</button>
+    </div>
+  </div>
+  <div class="presenter-body">
+    <div class="presenter-stats">
+      <div class="pstat"><div class="pstat-num green" id="p-votes">0</div><div class="pstat-lbl">respuestas</div></div>
+      <div class="pstat"><div class="pstat-num" id="p-qnum">1/3</div><div class="pstat-lbl">pregunta</div></div>
+      <div class="pstat">
+        <div class="pstat-num amber" id="p-countdown-num">30</div>
+        <div class="pstat-lbl">segundos</div>
+      </div>
+      <div class="pstat"><div class="pstat-num" id="p-pct">0%</div><div class="pstat-lbl">participación</div></div>
+    </div>
+
+    <div class="qr-panel">
+      <div class="qr-box" id="qr-code-presenter"></div>
+      <div class="qr-info">
+        <div class="qr-title">📲 Alumnos: escaneá para votar</div>
+        <div class="qr-url" id="qr-url-display">generando URL...</div>
+        <div class="qr-note">El QR apunta al modo alumno. Funciona desde cualquier dispositivo con internet — no necesitan estar en la misma red.</div>
+      </div>
+    </div>
+
+    <div class="p-q-box">
+      <div class="q-label" id="p-q-label">PREGUNTA 1</div>
+      <div class="q-text" id="p-q-text">Cargando...</div>
+      <div id="p-bars"></div>
+      <div class="explanation-box" id="p-explanation">
+        <div class="explanation-label">💡 ¿Por qué esta es la correcta?</div>
+        <div class="explanation-text" id="p-explanation-text"></div>
+      </div>
+    </div>
+
+    <div class="presenter-actions">
+      <button class="pbt pbt-accent" onclick="startTimer()">▶ Iniciar cuenta regresiva</button>
+      <button class="pbt" onclick="pAction('reset')">↺ Reiniciar votos</button>
+      <button class="pbt" onclick="pAction('prev')">← Anterior</button>
+      <button class="pbt" onclick="pAction('next')">Siguiente →</button>
+      <button id="btn-reveal" class="pbt pbt-amber" onclick="pAction('reveal')">👁 Mostrar correcta + explicación</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     STUDENT VIEW
+══════════════════════════════════════════ -->
+<div id="student-view" class="app-view">
+  <div class="topbar">
+    <div class="topbar-title">modo <span style="color:var(--blue)">alumno</span></div>
+    <span id="s-conn-badge" class="conn-badge">conectando...</span>
+  </div>
+  <div class="student-body">
+    <div class="s-progress" id="s-progress"></div>
+    <div class="s-countdown" id="s-countdown" style="display:none;">
+      <span class="s-countdown-num" id="s-countdown-num">30</span>
+      <div class="s-countdown-bar"><div class="s-countdown-fill" id="s-countdown-fill" style="width:100%;background:var(--accent);"></div></div>
+      <span class="s-countdown-lbl">seg</span>
+    </div>
+    <div id="s-content"></div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     EDITOR VIEW
+══════════════════════════════════════════ -->
+<div id="editor-view" class="app-view">
+  <div class="topbar">
+    <div class="topbar-title">modo <span style="color:var(--purple)">editor</span></div>
+    <div style="display:flex;gap:8px;">
+      <button onclick="saveQuestions()" style="padding:6px 14px;border-radius:8px;border:1px solid rgba(74,222,158,0.4);background:var(--accent-bg);color:var(--accent);font-size:12px;cursor:pointer;font-family:'DM Mono',sans-serif;" id="save-btn">💾 guardar</button>
+      <button class="btn-back" onclick="goHome()">← inicio</button>
+    </div>
+  </div>
+  <div class="editor-body">
+    <div class="e-sidebar">
+      <div id="e-q-list"></div>
+      <button class="e-add-btn" onclick="addQuestion()">+ nueva pregunta</button>
+    </div>
+    <div class="e-form" id="e-form">
+      <div style="color:var(--text3);font-size:14px;">Seleccioná una pregunta para editarla.</div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ══════════════════════════════════════════
+// CONFIG & STATE
+// ══════════════════════════════════════════
+const TIMER_DURATION = 30;
+const ESTIMATED_STUDENTS = 50;
+const SESSION_ID = 'quiz_' + window.location.hostname.replace(/\./g,'_');
+
+let SB_URL = '', SB_KEY = '';
+let questions = [];
+let currentQ = 0;
+let revealed = false;
+let editingIdx = 0;
+let studentVoted = false;
+let studentChannel = null;
+let presenterChannel = null;
+let timerInterval = null;
+let timerEnd = 0;
+let presenterRefreshInterval = null;
+
+const BAR_COLORS = ['#4ade9e','#60a5fa','#fb7185','#fbbf24','#a78bfa','#34d399'];
+
+const DEFAULT_QUESTIONS = [
+  {
+    text: '¿Cuál es la principal diferencia entre ARN mensajero y ADN genómico?',
+    options: ['El ARNm es de doble hebra','El ARNm contiene intrones procesados','El ARNm es monocatenario y no contiene intrones','El ADN es inestable a 37°C'],
+    correct: 2,
+    explanation: 'El ARNm es un transcripto procesado (splicing) del gen: es monocatenario, no contiene intrones (fueron eliminados por el espliceosoma) y posee cap 5\' y cola poli-A. El ADN genómico es bicatenario y contiene la secuencia completa, incluyendo intrones y regiones regulatorias.'
+  },
+  {
+    text: '¿Qué tipo de genoma tiene el virus de la influenza según la clasificación de Baltimore?',
+    options: ['ARN(+) monocatenario','ARN(−) monocatenario segmentado','ADN bicatenario circular','ARN bicatenario'],
+    correct: 1,
+    explanation: 'Influenza A/B pertenece al Grupo V de Baltimore: ARN de sentido negativo (−ssRNA). Además, su genoma es segmentado (8 segmentos), lo que permite la reasortación genética — base molecular de la deriva y el cambio antigénico. No puede actuar directamente como ARNm: necesita su ARN polimerasa viral para transcribir ARN(+).'
+  },
+  {
+    text: '¿Cuál de estos métodos tiene mayor sensibilidad analítica para detección viral?',
+    options: ['Cultivo viral clásico','ELISA de antígeno directo','RT-qPCR','Inmunofluorescencia indirecta'],
+    correct: 2,
+    explanation: 'La RT-qPCR tiene un límite de detección (LOD) de 1–10 copias/reacción, varios órdenes de magnitud por debajo del ELISA (requiere ~10⁵–10⁶ partículas virales) y del cultivo (requiere virus viable). Además, permite cuantificación absoluta mediante curva estándar y cálculo de Cq. Es el gold standard para diagnóstico molecular de virus ARN.'
+  }
+];
+
+// ══════════════════════════════════════════
+// STORAGE
+// ══════════════════════════════════════════
+function loadCreds() {
+  SB_URL = localStorage.getItem('sb_url') || '';
+  SB_KEY = localStorage.getItem('sb_key') || '';
+  questions = JSON.parse(localStorage.getItem('quiz_questions') || JSON.stringify(DEFAULT_QUESTIONS));
+}
+
+function saveCreds() {
+  localStorage.setItem('sb_url', SB_URL);
+  localStorage.setItem('sb_key', SB_KEY);
+}
+
+function saveQuestions() {
+  localStorage.setItem('quiz_questions', JSON.stringify(questions));
+  const btn = document.getElementById('save-btn');
+  if (btn) { btn.textContent = '✓ guardado'; setTimeout(() => btn.textContent = '💾 guardar', 1500); }
+}
+
+// ══════════════════════════════════════════
+// SUPABASE API HELPERS
+// ══════════════════════════════════════════
+async function sbFetch(path, opts = {}) {
+  const res = await fetch(SB_URL + '/rest/v1/' + path, {
+    ...opts,
+    headers: {
+      'apikey': SB_KEY,
+      'Authorization': 'Bearer ' + SB_KEY,
+      'Content-Type': 'application/json',
+      'Prefer': opts.prefer || 'return=representation',
+      ...(opts.headers || {})
+    }
+  });
+  if (!res.ok) {
+    const err = await res.text();
+    throw new Error(err);
+  }
+  const txt = await res.text();
+  return txt ? JSON.parse(txt) : null;
+}
+
+async function getVotes(qIdx) {
+  try {
+    const data = await sbFetch(`quiz_votes?select=option_index&session_id=eq.${SESSION_ID}&q_index=eq.${qIdx}`);
+    const arr = new Array(questions[qIdx].options.length).fill(0);
+    (data || []).forEach(r => { if (arr[r.option_index] !== undefined) arr[r.option_index]++; });
+    return arr;
+  } catch(e) { return new Array(questions[qIdx].options.length).fill(0); }
+}
+
+async function insertVote(qIdx, optIdx) {
+  await sbFetch('quiz_votes', {
+    method: 'POST',
+    prefer: 'return=minimal',
+    body: JSON.stringify({ session_id: SESSION_ID, q_index: qIdx, option_index: optIdx })
+  });
+}
+
+async function deleteVotes(qIdx) {
+  await sbFetch(`quiz_votes?session_id=eq.${SESSION_ID}&q_index=eq.${qIdx}`, {
+    method: 'DELETE',
+    prefer: 'return=minimal'
+  });
+}
+
+async function getState() {
+  try {
+    const data = await sbFetch(`quiz_state?session_id=eq.${SESSION_ID}&limit=1`);
+    return (data && data[0]) || null;
+  } catch(e) { return null; }
+}
+
+async function upsertState(patch) {
+  await sbFetch('quiz_state', {
+    method: 'POST',
+    prefer: 'resolution=merge-duplicates,return=minimal',
+    headers: { 'Prefer': 'resolution=merge-duplicates,return=minimal' },
+    body: JSON.stringify({ session_id: SESSION_ID, updated_at: new Date().toISOString(), ...patch })
+  });
+}
+
+// ══════════════════════════════════════════
+// REALTIME (Supabase broadcast via polling fallback)
+// ══════════════════════════════════════════
+// We use HTTP polling + Supabase Realtime REST (no WS library needed)
+let pollInterval = null;
+
+function startStudentPolling() {
+  pollInterval = setInterval(async () => {
+    const state = await getState();
+    if (!state) return;
+    // Sync question
+    if (state.current_q !== currentQ) {
+      currentQ = state.current_q;
+      studentVoted = false;
+      renderStudent();
+    }
+    // Update countdown for student
+    updateStudentCountdown(state.timer_end);
+  }, 2000);
+}
+
+function updateStudentCountdown(timerEndVal) {
+  const remaining = Math.max(0, Math.ceil((timerEndVal - Date.now()) / 1000));
+  const el = document.getElementById('s-countdown');
+  const numEl = document.getElementById('s-countdown-num');
+  const fillEl = document.getElementById('s-countdown-fill');
+  if (!el) return;
+  if (timerEndVal <= 0 || remaining <= 0) {
+    el.style.display = 'none';
+    if (timerEndVal > 0 && !studentVoted) {
+      showTimeUp();
+    }
+    return;
+  }
+  el.style.display = 'flex';
+  if (numEl) numEl.textContent = remaining;
+  if (fillEl) {
+    const pct = Math.round((remaining / TIMER_DURATION) * 100);
+    fillEl.style.width = pct + '%';
+    if (remaining <= 10) { fillEl.style.background = 'var(--coral)'; if (numEl) numEl.style.color = 'var(--coral)'; }
+    else if (remaining <= 20) { fillEl.style.background = 'var(--amber)'; if (numEl) numEl.style.color = 'var(--amber)'; }
+    else { fillEl.style.background = 'var(--accent)'; if (numEl) numEl.style.color = 'var(--text)'; }
+  }
+}
+
+function showTimeUp() {
+  if (studentVoted) return;
+  document.getElementById('s-content').innerHTML = `
+    <div class="s-time-up">
+      <div class="s-time-up-icon">⏱</div>
+      <div class="s-time-up-title">¡Tiempo agotado!</div>
+      <div class="s-time-up-sub">No se registró tu respuesta. Mirá los resultados en pantalla.</div>
+    </div>`;
+}
+
+// ══════════════════════════════════════════
+// SETUP
+// ══════════════════════════════════════════
+async function connectSupabase() {
+  const url = document.getElementById('sb-url').value.trim().replace(/\/$/, '');
+  const key = document.getElementById('sb-key').value.trim();
+  const errEl = document.getElementById('setup-error');
+  errEl.style.display = 'none';
+  if (!url || !key) { errEl.textContent = 'Completá ambos campos.'; errEl.style.display = 'block'; return; }
+  SB_URL = url; SB_KEY = key;
+  try {
+    await sbFetch('quiz_state?limit=1');
+    saveCreds();
+    showModeSelector();
+  } catch(e) {
+    errEl.textContent = 'No se pudo conectar. Verificá la URL, la key y que las tablas existan.';
+    errEl.style.display = 'block';
+  }
+}
+
+function showSetup() {
+  document.getElementById('mode-selector').style.display = 'none';
+  document.getElementById('setup-screen').style.display = 'flex';
+  document.getElementById('sb-url').value = SB_URL;
+  document.getElementById('sb-key').value = SB_KEY;
+}
+
+function showModeSelector() {
+  document.getElementById('setup-screen').style.display = 'none';
+  document.getElementById('mode-selector').style.display = 'flex';
+  updateConnBadge('ok');
+}
+
+function updateConnBadge(status) {
+  const b = document.getElementById('conn-status');
+  if (!b) return;
+  b.className = 'conn-badge ' + (status === 'ok' ? 'ok' : 'err');
+  b.innerHTML = `<span class="conn-dot"></span> ${status === 'ok' ? 'conectado' : 'sin conexión'}`;
+}
+
+// ══════════════════════════════════════════
+// NAVIGATION
+// ══════════════════════════════════════════
+function goHome() {
+  clearInterval(timerInterval);
+  clearInterval(presenterRefreshInterval);
+  clearInterval(pollInterval);
+  document.querySelectorAll('.app-view').forEach(v => v.classList.remove('active'));
+  document.getElementById('mode-selector').style.display = 'flex';
+}
+
+async function enterMode(mode) {
+  document.getElementById('mode-selector').style.display = 'none';
+  if (mode === 'presenter') {
+    document.getElementById('presenter-view').classList.add('active');
+    const state = await getState();
+    if (state) { currentQ = state.current_q; revealed = state.revealed; timerEnd = state.timer_end || 0; }
+    await renderPresenter();
+    generateQR();
+    presenterRefreshInterval = setInterval(renderPresenter, 2000);
+  } else if (mode === 'student') {
+    document.getElementById('student-view').classList.add('active');
+    studentVoted = false;
+    const state = await getState();
+    if (state) { currentQ = state.current_q; timerEnd = state.timer_end || 0; }
+    renderStudent();
+    updateStudentCountdown(timerEnd);
+    startStudentPolling();
+    const sb = document.getElementById('s-conn-badge');
+    if (sb) { sb.className = 'conn-badge ok'; sb.innerHTML = '<span class="conn-dot"></span> conectado'; }
+  } else if (mode === 'editor') {
+    document.getElementById('editor-view').classList.add('active');
+    editingIdx = 0;
+    renderEditorSidebar();
+    renderEditorForm();
+  }
+}
+
+// ══════════════════════════════════════════
+// QR
+// ══════════════════════════════════════════
+function getStudentURL() {
+  const u = new URL(window.location.href);
+  u.searchParams.set('mode', 'alumno');
+  return u.toString();
+}
+
+function generateQR() {
+  const url = getStudentURL();
+  document.getElementById('qr-url-display').textContent = url;
+  const box = document.getElementById('qr-code-presenter');
+  box.innerHTML = '';
+  try {
+    new QRCode(box, { text: url, width: 130, height: 130, colorDark: '#000', colorLight: '#fff', correctLevel: QRCode.CorrectLevel.M });
+  } catch(e) {
+    box.innerHTML = '<div style="width:130px;height:130px;display:flex;align-items:center;justify-content:center;font-size:11px;color:#999;text-align:center;padding:8px;">QR no disponible</div>';
+  }
+}
+
+// ══════════════════════════════════════════
+// TIMER
+// ══════════════════════════════════════════
+async function startTimer() {
+  clearInterval(timerInterval);
+  timerEnd = Date.now() + TIMER_DURATION * 1000;
+  await upsertState({ timer_end: timerEnd });
+  runPresenterTimer();
+}
+
+function runPresenterTimer() {
+  clearInterval(timerInterval);
+  timerInterval = setInterval(() => {
+    const remaining = Math.max(0, Math.ceil((timerEnd - Date.now()) / 1000));
+    const numEl = document.getElementById('p-countdown-num');
+    const compEl = document.getElementById('p-timer-compact');
+    if (numEl) {
+      numEl.textContent = remaining;
+      numEl.style.color = remaining <= 10 ? 'var(--coral)' : remaining <= 20 ? 'var(--amber)' : 'var(--amber)';
+    }
+    if (compEl) compEl.textContent = remaining + 's';
+    if (remaining <= 0) clearInterval(timerInterval);
+  }, 500);
+}
+
+// ══════════════════════════════════════════
+// PRESENTER
+// ══════════════════════════════════════════
+async function renderPresenter() {
+  const state = await getState();
+  if (state) {
+    currentQ = state.current_q;
+    revealed = state.revealed;
+    timerEnd = state.timer_end || 0;
+    if (timerEnd > Date.now()) runPresenterTimer();
+  }
+  const q = questions[currentQ];
+  if (!q) return;
+  const votes = await getVotes(currentQ);
+  const total = votes.reduce((a,b) => a+b, 0);
+  document.getElementById('p-votes').textContent = total;
+  document.getElementById('p-qnum').textContent = `${currentQ+1}/${questions.length}`;
+  document.getElementById('p-pct').textContent = Math.round((total/ESTIMATED_STUDENTS)*100) + '%';
+  document.getElementById('p-q-label').textContent = `PREGUNTA ${currentQ+1}`;
+  document.getElementById('p-q-text').textContent = q.text;
+  const barsDiv = document.getElementById('p-bars');
+  barsDiv.innerHTML = '';
+  q.options.forEach((opt, i) => {
+    const pct = total > 0 ? Math.round((votes[i]/total)*100) : 0;
+    const isCorrect = revealed && i === q.correct;
+    const color = isCorrect ? '#4ade9e' : BAR_COLORS[i % BAR_COLORS.length];
+    const letter = String.fromCharCode(65+i);
+    barsDiv.innerHTML += `
+      <div class="bar-row">
+        <div class="bar-meta">
+          <div class="bar-option">
+            <span class="bar-letter">${letter}</span>
+            <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${opt}</span>
+            ${isCorrect ? '<span class="correct-tag">CORRECTA</span>' : ''}
+          </div>
+          <span class="bar-count">${votes[i]} — ${pct}%</span>
+        </div>
+        <div class="bar-track">
+          <div class="bar-fill" style="width:${pct}%;background:${color};">
+            ${pct >= 8 ? `<span class="bar-pct">${pct}%</span>` : ''}
+          </div>
+        </div>
+      </div>`;
+  });
+  // Explanation
+  const expBox = document.getElementById('p-explanation');
+  const expText = document.getElementById('p-explanation-text');
+  if (revealed && q.explanation) {
+    expBox.classList.add('visible');
+    expText.textContent = q.explanation;
+  } else {
+    expBox.classList.remove('visible');
+  }
+  // Reveal button text
+  const revBtn = document.getElementById('btn-reveal');
+  if (revBtn) revBtn.textContent = revealed ? '🙈 Ocultar correcta' : '👁 Mostrar correcta + explicación';
+}
+
+async function pAction(action) {
+  if (action === 'reset') {
+    await deleteVotes(currentQ);
+    revealed = false;
+    await upsertState({ revealed: false });
+  } else if (action === 'next') {
+    if (currentQ < questions.length-1) {
+      currentQ++;
+      revealed = false;
+      timerEnd = 0;
+      clearInterval(timerInterval);
+      document.getElementById('p-countdown-num').textContent = TIMER_DURATION;
+      await upsertState({ current_q: currentQ, revealed: false, timer_end: 0 });
+    }
+  } else if (action === 'prev') {
+    if (currentQ > 0) {
+      currentQ--;
+      revealed = false;
+      timerEnd = 0;
+      clearInterval(timerInterval);
+      document.getElementById('p-countdown-num').textContent = TIMER_DURATION;
+      await upsertState({ current_q: currentQ, revealed: false, timer_end: 0 });
+    }
+  } else if (action === 'reveal') {
+    revealed = !revealed;
+    await upsertState({ revealed });
+  }
+  await renderPresenter();
+}
+
+// ══════════════════════════════════════════
+// STUDENT
+// ══════════════════════════════════════════
+function renderStudent() {
+  const q = questions[currentQ];
+  if (!q) return;
+  const prog = document.getElementById('s-progress');
+  if (prog) prog.innerHTML = questions.map((_,i) =>
+    `<div class="s-prog-dot ${i<currentQ?'done':i===currentQ?'active':''}"></div>`).join('');
+  if (studentVoted) {
+    document.getElementById('s-content').innerHTML = `
+      <div class="s-success">
+        <div class="s-success-icon">✓</div>
+        <div class="s-success-title">¡Respuesta registrada!</div>
+        <div class="s-success-sub">Mirá la pantalla del presentador para ver los resultados en tiempo real.</div>
+      </div>`;
+    return;
+  }
+  let html = `<div class="s-q-text">${q.text}</div><div class="s-options">`;
+  q.options.forEach((opt, i) => {
+    html += `<button class="s-opt" onclick="studentVote(${i})">`
+      + `<span class="s-opt-letter">${String.fromCharCode(65+i)}</span>${opt}</button>`;
+  });
+  html += '</div>';
+  document.getElementById('s-content').innerHTML = html;
+}
+
+async function studentVote(optIdx) {
+  const state = await getState();
+  if (state && state.timer_end > 0 && Date.now() > state.timer_end) {
+    showTimeUp(); return;
+  }
+  await insertVote(currentQ, optIdx);
+  studentVoted = true;
+  renderStudent();
+}
+
+// ══════════════════════════════════════════
+// EDITOR
+// ══════════════════════════════════════════
+function renderEditorSidebar() {
+  document.getElementById('e-q-list').innerHTML = questions.map((q,i) => `
+    <div class="e-q-item ${editingIdx===i?'active':''}" onclick="selectEditQ(${i})">
+      <div class="e-q-num">P${i+1}</div>
+      ${q.text.substring(0,48)}${q.text.length>48?'...':''}
+    </div>`).join('');
+}
+
+function selectEditQ(idx) { editingIdx = idx; renderEditorSidebar(); renderEditorForm(); }
+
+function renderEditorForm() {
+  if (editingIdx < 0 || editingIdx >= questions.length) return;
+  const q = questions[editingIdx];
+  document.getElementById('e-form').innerHTML = `
+    <div>
+      <div class="e-label">Pregunta</div>
+      <textarea class="e-input" id="e-q-text" rows="3">${q.text}</textarea>
+    </div>
+    <div>
+      <div class="e-label">Opciones — marcá el radio de la correcta</div>
+      <div id="e-opts">${q.options.map((opt,i) => `
+        <div class="e-option-row">
+          <input type="radio" name="e-correct" class="e-correct-radio" value="${i}" ${q.correct===i?'checked':''}>
+          <span class="correct-hint">✓</span>
+          <input class="e-opt-input" id="e-opt-${i}" value="${opt}" style="flex:1">
+          ${q.options.length>2?`<button class="e-del-opt" onclick="removeOption(${i})">×</button>`:''}
+        </div>`).join('')}
+      </div>
+    </div>
+    <div>
+      <div class="e-label">Explicación de la respuesta correcta</div>
+      <textarea class="e-input" id="e-explanation" rows="4" placeholder="Explicá por qué la opción marcada es la correcta. Este texto aparece en pantalla cuando el presentador muestra la respuesta.">${q.explanation || ''}</textarea>
+    </div>
+    <div class="e-actions">
+      <button class="ebtn" onclick="addOption()">+ opción</button>
+      <button class="ebtn ebtn-save" onclick="saveQuestion()">✓ guardar cambios</button>
+      ${questions.length>1?`<button class="ebtn ebtn-del" onclick="deleteQuestion()">✕ eliminar</button>`:''}
+    </div>`;
+}
+
+function addQuestion() {
+  questions.push({ text:'Nueva pregunta', options:['Opción A','Opción B','Opción C'], correct:0, explanation:'' });
+  editingIdx = questions.length-1;
+  renderEditorSidebar(); renderEditorForm();
+}
+
+function addOption() {
+  if (editingIdx < 0) return;
+  questions[editingIdx].options.push('Nueva opción');
+  renderEditorForm();
+}
+
+function removeOption(idx) {
+  const q = questions[editingIdx];
+  if (q.options.length <= 2) return;
+  q.options.splice(idx,1);
+  if (q.correct >= q.options.length) q.correct = q.options.length-1;
+  renderEditorForm();
+}
+
+function saveQuestion() {
+  if (editingIdx < 0) return;
+  const q = questions[editingIdx];
+  q.text = document.getElementById('e-q-text').value;
+  q.options = q.options.map((_,i) => document.getElementById(`e-opt-${i}`)?.value || _);
+  const sel = document.querySelector('input[name="e-correct"]:checked');
+  if (sel) q.correct = parseInt(sel.value);
+  q.explanation = document.getElementById('e-explanation')?.value || '';
+  saveQuestions();
+  renderEditorSidebar(); renderEditorForm();
+}
+
+function deleteQuestion() {
+  if (questions.length <= 1) return;
+  questions.splice(editingIdx,1);
+  editingIdx = Math.min(editingIdx, questions.length-1);
+  if (currentQ >= questions.length) currentQ = questions.length-1;
+  renderEditorSidebar(); renderEditorForm();
+}
+
+// ══════════════════════════════════════════
+// INIT
+// ══════════════════════════════════════════
+loadCreds();
+const urlParams = new URLSearchParams(window.location.search);
+if (urlParams.get('mode') === 'alumno') {
+  if (SB_URL && SB_KEY) {
+    showModeSelector();
+    enterMode('student');
+  } else {
+    document.getElementById('setup-screen').style.display = 'flex';
+  }
+} else {
+  if (SB_URL && SB_KEY) {
+    showModeSelector();
+  } else {
+    document.getElementById('setup-screen').style.display = 'flex';
+  }
+}
+</script>
+</body>
+</html>
