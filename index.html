@@ -531,8 +531,12 @@ const EMBEDDED_URL = 'https://wpxdmcxgjzgaxozfelab.supabase.co';
 const EMBEDDED_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndweGRtY3hnanpnYXhvemZlbGFiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAwNTkxMjAsImV4cCI6MjA5NTYzNTEyMH0.7cttVaGqnGiZYXeFO3k_LwKqQOhUvxoFFtiXM9-hM-I';
 
 function loadCreds() {
-  SB_URL = localStorage.getItem('sb_url') || EMBEDDED_URL;
-  SB_KEY = localStorage.getItem('sb_key') || EMBEDDED_KEY;
+  // Siempre usar credenciales embebidas si existen
+  SB_URL = EMBEDDED_URL;
+  SB_KEY = EMBEDDED_KEY;
+  // Guardarlas también en localStorage para consistencia
+  localStorage.setItem('sb_url', SB_URL);
+  localStorage.setItem('sb_key', SB_KEY);
   questions = JSON.parse(localStorage.getItem('quiz_questions') || JSON.stringify(DEFAULT_QUESTIONS));
 }
 
