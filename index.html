@@ -525,9 +525,14 @@ const DEFAULT_QUESTIONS = [
 // ══════════════════════════════════════════
 // STORAGE
 // ══════════════════════════════════════════
+// ── CREDENCIALES PRE-CARGADAS ──
+// El presentador puede cambiarlas desde el menú "cambiar credenciales"
+const EMBEDDED_URL = 'https://wpxdmcxgjzgaxozfelab.supabase.co';
+const EMBEDDED_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndweGRtY3hnanpnYXhvemZlbGFiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAwNTkxMjAsImV4cCI6MjA5NTYzNTEyMH0.7cttVaGqnGiZYXeFO3k_LwKqQOhUvxoFFtiXM9-hM-I';
+
 function loadCreds() {
-  SB_URL = localStorage.getItem('sb_url') || '';
-  SB_KEY = localStorage.getItem('sb_key') || '';
+  SB_URL = localStorage.getItem('sb_url') || EMBEDDED_URL;
+  SB_KEY = localStorage.getItem('sb_key') || EMBEDDED_KEY;
   questions = JSON.parse(localStorage.getItem('quiz_questions') || JSON.stringify(DEFAULT_QUESTIONS));
 }
 
@@ -996,15 +1001,19 @@ function deleteQuestion() {
 // ══════════════════════════════════════════
 loadCreds();
 const urlParams = new URLSearchParams(window.location.search);
+const hasEmbedded = EMBEDDED_KEY !== 'REEMPLAZAR_CON_ANON_KEY';
+const hasCreds = SB_URL && SB_KEY && (hasEmbedded || localStorage.getItem('sb_url'));
+
 if (urlParams.get('mode') === 'alumno') {
-  if (SB_URL && SB_KEY) {
-    showModeSelector();
+  if (hasCreds) {
+    // Alumnos entran directo sin ver setup
+    document.getElementById('setup-screen').style.display = 'none';
     enterMode('student');
   } else {
     document.getElementById('setup-screen').style.display = 'flex';
   }
 } else {
-  if (SB_URL && SB_KEY) {
+  if (hasCreds) {
     showModeSelector();
   } else {
     document.getElementById('setup-screen').style.display = 'flex';
