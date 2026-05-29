@@ -503,22 +503,87 @@ const BAR_COLORS = ['#4ade9e','#60a5fa','#fb7185','#fbbf24','#a78bfa','#34d399']
 
 const DEFAULT_QUESTIONS = [
   {
-    text: '¿Cuál es la principal diferencia entre ARN mensajero y ADN genómico?',
-    options: ['El ARNm es de doble hebra','El ARNm contiene intrones procesados','El ARNm es monocatenario y no contiene intrones','El ADN es inestable a 37°C'],
-    correct: 2,
-    explanation: 'El ARNm es un transcripto procesado (splicing) del gen: es monocatenario, no contiene intrones (fueron eliminados por el espliceosoma) y posee cap 5\' y cola poli-A. El ADN genómico es bicatenario y contiene la secuencia completa, incluyendo intrones y regiones regulatorias.'
+    text: 'El laboratorio recibe una queja de un médico porque dos muestras del mismo paciente (enviadas en el mismo día) arrojaron resultados diferentes para glucosa en sangre. Al investigar, se descubre que los reactivos usados estaban cerca de su fecha de vencimiento. ¿Qué acción tomarías?',
+    options: [
+      'Verificar el lote de reactivos, recalibrar los equipos y repetir las pruebas con controles de calidad.',
+      'Ignorar la queja porque el médico podría haber tomado mal las muestras.',
+      'Ajustar manualmente los resultados para que coincidan y cerrar el caso.',
+      'Usar los mismos reactivos hasta agotarlos, para no generar desperdicio.'
+    ],
+    correct: 0,
+    explanation: 'ISO 9001 — 7.1.6 Conocimiento organizacional / 8.5.1 Control de producción. Reactivos y equipos deben estar validados antes de su uso. Reactivos próximos al vencimiento pueden comprometer la exactitud analítica; la acción correcta es verificar, recalibrar y repetir con controles para asegurar trazabilidad del resultado.'
   },
   {
-    text: '¿Qué tipo de genoma tiene el virus de la influenza según la clasificación de Baltimore?',
-    options: ['ARN(+) monocatenario','ARN(−) monocatenario segmentado','ADN bicatenario circular','ARN bicatenario'],
+    text: 'Un técnico etiquetó incorrectamente 10 muestras de orina, intercambiando los nombres de dos pacientes. El error se detectó antes de emitir los resultados, pero ya se procesaron 3 muestras. ¿Cómo procederías?',
+    options: [
+      'Despedir al técnico sin capacitación adicional.',
+      'Repetir las pruebas con las muestras correctas y documentar el incidente en un registro de no conformidad.',
+      'No informar a los pacientes para evitar problemas legales.',
+      'Emitir los resultados igualmente, explicando al médico que hubo un error menor.'
+    ],
     correct: 1,
-    explanation: 'Influenza A/B pertenece al Grupo V de Baltimore: ARN de sentido negativo (−ssRNA). Además, su genoma es segmentado (8 segmentos), lo que permite la reasortación genética — base molecular de la deriva y el cambio antigénico. No puede actuar directamente como ARNm: necesita su ARN polimerasa viral para transcribir ARN(+).'
+    explanation: 'ISO 9001 — 8.5.2 Trazabilidad / 8.5.1 Control de producción. La identificación unívoca de muestras es un requisito crítico en laboratorios clínicos. Todo error debe registrarse como no conformidad, analizarse con causa raíz y corregirse. Ocultar errores viola los principios de mejora continua y expone al laboratorio a responsabilidad legal.'
   },
   {
-    text: '¿Cuál de estos métodos tiene mayor sensibilidad analítica para detección viral?',
-    options: ['Cultivo viral clásico','ELISA de antígeno directo','RT-qPCR','Inmunofluorescencia indirecta'],
+    text: 'El laboratorio implementó un nuevo método para PCR cuantitativa, pero varios colaboradores no fueron capacitados adecuadamente y cometieron errores en la preparación de muestras, generando retrasos. ¿Cómo resolverías esto?',
+    options: [
+      'Dejar que aprendan solos con el manual del equipo.',
+      'Contratar un nuevo técnico en lugar de capacitar a los existentes.',
+      'Capacitar urgentemente al personal, validar su competencia y supervisar los primeros ensayos.',
+      'Volver al método anterior para evitar riesgos.'
+    ],
     correct: 2,
-    explanation: 'La RT-qPCR tiene un límite de detección (LOD) de 1–10 copias/reacción, varios órdenes de magnitud por debajo del ELISA (requiere ~10⁵–10⁶ partículas virales) y del cultivo (requiere virus viable). Además, permite cuantificación absoluta mediante curva estándar y cálculo de Cq. Es el gold standard para diagnóstico molecular de virus ARN.'
+    explanation: 'ISO 9001 — 7.1.5.2 Trazabilidad de la medición / 9.1 Monitoreo y medición. Antes de implementar un método nuevo, el personal debe demostrar competencia verificable. La norma exige registros de capacitación y evaluación de desempeño. Supervisar los primeros ensayos garantiza que la transición no comprometa la calidad del resultado.'
+  },
+  {
+    text: 'Varios clientes (laboratorios derivantes) se quejan de que los resultados de hormonas tiroideas tardan más de 72 horas (cuando el laboratorio promete 48 horas). Al investigar, se detecta cuellos de botella en la centrifugación y falta de personal en el turno tarde. ¿Qué acción tomar?',
+    options: [
+      'Extender el plazo oficial a 72 horas para cumplir siempre.',
+      'Priorizar solo muestras urgentes e ignorar el resto.',
+      'Reorganizar turnos, optimizar el flujo de trabajo y comunicar cambios a los clientes.'
+    ],
+    correct: 2,
+    explanation: 'ISO 9001 — 8.5.1 Control de producción / 10.3 Mejora continua. Modificar el plazo prometido sin resolver la causa raíz es una solución cosmética. La norma exige identificar la causa del incumplimiento, implementar acciones correctivas medibles y comunicar proactivamente al cliente. La mejora del flujo de trabajo es la única respuesta sistémica.'
+  },
+  {
+    text: 'Al revisar la sección de hematología, se observa que el técnico de turno está utilizando una centrífuga cuya etiqueta de calibración venció hace dos meses. El técnico argumenta que el equipo "funciona perfectamente" porque los ruidos y tiempos parecen normales. ¿Qué acción es la correcta según la gestión de calidad?',
+    options: [
+      'Retirar el equipo de servicio inmediatamente y etiquetarlo como fuera de servicio hasta recalibración.',
+      'Permitir que se siga usando solo para muestras de rutina hasta que venga el servicio técnico.',
+      'Extender manualmente la vigencia de la calibración en el sistema por tres meses más.'
+    ],
+    correct: 0,
+    explanation: 'ISO 9001 — 7.1.5.2 Trazabilidad de la medición. La percepción subjetiva de "funcionamiento normal" no reemplaza la calibración documentada. Un equipo con calibración vencida genera resultados sin trazabilidad metrológica válida. Debe retirarse del servicio, etiquetarse claramente y recalibrarse antes de volver a usarse, independientemente del estado aparente.'
+  },
+  {
+    text: 'El bioquímico del área de hormonas detecta que el control de calidad interno (CCI) para la determinación de Troponina T se encuentra fuera de las 3 desviaciones estándar (Regla de Westgard 3s). El pool de muestras de pacientes de urgencia ya está listo para ser procesado. ¿Cómo se debe proceder?',
+    options: [
+      'Procesar las muestras y colocar una nota de advertencia en el informe indicando que el CCI falló.',
+      'Repetir el control sin cambios y, si vuelve a fallar, aplicar un factor de corrección matemático.',
+      'Retener el procesamiento, identificar la causa raíz de la desviación, solucionar el problema, verificar con nuevo control y luego procesar las muestras.'
+    ],
+    correct: 2,
+    explanation: 'ISO 9001 — 8.5.1 Control de producción / 6.1 Acciones para abordar riesgos. La regla 3s de Westgard indica error sistemático o aleatorio significativo: procesar muestras en esa condición genera resultados clínicamente no confiables. La Troponina T es un marcador cardíaco crítico — un resultado erróneo puede derivar en decisiones clínicas de alto impacto. La causa raíz debe resolverse antes de procesar.'
+  },
+  {
+    text: 'Un proveedor externo entrega un nuevo lote de puntas para pipetas automáticas de marca genérica, más económica que las validadas en el manual de calidad. El personal las empieza a usar en biología molecular sin previo aviso. ¿Qué falta grave se está cometiendo?',
+    options: [
+      'Ninguna, ya que todas las puntas plásticas cumplen la misma función independientemente de la marca.',
+      'No se realizó el proceso de verificación y aceptación del nuevo lote antes de su introducción al uso analítico.',
+      'El único error es no haberle pedido un descuento adicional al proveedor por cambiar la marca pactada.'
+    ],
+    correct: 1,
+    explanation: 'ISO 9001 — 8.4 Control de procesos, productos y servicios suministrados externamente. Los insumos de contacto con muestras en PCR (puntas con filtro, tubos, etc.) impactan directamente en la inhibición, rendimiento de extracción y resultado cuantitativo. Todo cambio de proveedor o lote requiere verificación técnica documentada antes del uso analítico. No hacerlo invalida la trazabilidad del método.'
+  },
+  {
+    text: 'El bioquímico del área de orinas encuentra un derrame biológico de una muestra sospechosa de tuberculosis sobre la mesada. Al buscar el POE para manejo de derrames, la carpeta física contiene una versión del año 2018 desactualizada. ¿Qué aspecto de la gestión está fallando y qué se debe hacer?',
+    options: [
+      'El control de cambios y distribución de documentos falló. Se debe contener el derrame con el kit de bioseguridad, reportar la existencia de copias obsoletas y exigir la distribución de la versión vigente.',
+      'Buscar el procedimiento correcto en internet mediante el teléfono móvil personal.',
+      'Ignorar el papel desactualizado, limpiar el derrame con agua corriente y tirar el documento a la basura ordinaria.'
+    ],
+    correct: 0,
+    explanation: 'ISO 9001 — 7.5.3 Control de la información documentada. Los POE obsoletos en los puestos de trabajo son una no conformidad mayor. La norma exige que solo las versiones vigentes estén disponibles en los puntos de uso. En situaciones de riesgo biológico, seguir un procedimiento desactualizado puede generar exposición ocupacional. La gestión documental no es burocracia — es una barrera de seguridad.'
   }
 ];
 
